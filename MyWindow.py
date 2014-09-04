@@ -1,7 +1,8 @@
 
 
 import sys
-from math import cos, pi, sin
+import random
+
 from PyQt5.QtCore import QSize, Qt
 from PyQt5.QtGui import (QBrush, QColor, QFont, QLinearGradient, QPainter,
         QPainterPath, QPalette, QPen)
@@ -71,14 +72,12 @@ class myWindow(QWidget):
     def __init__(self):
         super(myWindow, self).__init__()
 
-
-        self.createControl()
-        self.createPuzzle()
-
         mainLayout = QHBoxLayout()
-        mainLayout.addLayout(self.Buttons)
-        mainLayout.addLayout(self.labels)
 
+        self.createPuzzle()
+        mainLayout.addLayout(self.labels)
+        self.createControl()
+        mainLayout.addLayout(self.Buttons)
         self.btn_RotateCCL.clicked.connect(self.rotateCCL)
         self.btn_RotateCCR.clicked.connect(self.rotateCCR)
         self.btn_RotateCR.clicked.connect(self.rotateCR)
@@ -94,28 +93,28 @@ class myWindow(QWidget):
         for i in range(len(self.AllBalls)):
             if self.AllBalls[i].ring is not "right":
                 self.AllBalls[i].setRing("left")
-                self.AllBalls[i].setPosition(self.AllBalls[i].position+1)
-        self.renew()
+                self.AllBalls[i].setPosition(self.AllBalls[i].position-1)
+        self.draw()
 
     def rotateCCR(self):
         for i in range(len(self.AllBalls)):
             if self.AllBalls[i].ring is not "left":
                 self.AllBalls[i].setRing("right")
-                self.AllBalls[i].setPosition(self.AllBalls[i].position-1)
-        self.renew()
+                self.AllBalls[i].setPosition(self.AllBalls[i].position+1)
+        self.draw()
 
     def rotateCL(self):
         for i in range(len(self.AllBalls)):
             if self.AllBalls[i].ring is not "right":
                 self.AllBalls[i].setRing("left")
-                self.AllBalls[i].setPosition(self.AllBalls[i].position-1)
-        self.renew()
+                self.AllBalls[i].setPosition(self.AllBalls[i].position+1)
+        self.draw()
 
     def rotateCR(self):
         for i in range(len(self.AllBalls)):
             if self.AllBalls[i].ring is not "left":
                 self.AllBalls[i].setRing("right")
-                self.AllBalls[i].setPosition(self.AllBalls[i].position+1)
+                self.AllBalls[i].setPosition(self.AllBalls[i].position-1)
         self.draw()
 
     def Randomize(self):
@@ -125,22 +124,29 @@ class myWindow(QWidget):
         pass
 
     def draw(self):
-        xDict = [-1, -2, -2, -1, 0, 1, 2, 3, 4, 5,
-                 6, 7, 7, 6, 5, 4, 3, 2, 1, 0]
+        RxDict = [
+            6, 5, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 14, 13, 12, 11, 10, 9, 8, 7
+        ]
 
-        yDict = [-2, -1, 0, 1, 2, 3, 4, 5, 4, 3, 2, 1,
-                 0, -1, -2, -3, -4, -5, -4, -3]
+        LxDict = [
+            8, 9, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0, 0, 1, 2, 3, 4, 5, 6, 7
+        ]
+
+        yDict = [
+            3, 4, 6, 7, 8, 9, 10, 10, 9, 8, 7, 6, 4, 3, 2, 1, 0, 0, 1, 2
+        ]
 
 
         for i in range(len(self.AllBalls)):
+
             if self.AllBalls[i].ring is not "left":
-                horizontal = xDict[self.AllBalls[i].position]
+                horizontal = RxDict[self.AllBalls[i].position]
 
             else:
-                horizontal = -1 * xDict[self.AllBalls[i].position]
+                horizontal = LxDict[self.AllBalls[i].position]
 
             vertical = yDict[self.AllBalls[i].position]
-            self.labels.addWidget(self.AllBalls[i], vertical, horizontal, 3, 1)
+            self.labels.addWidget(self.AllBalls[i], vertical, horizontal, 2, 1)
 
     def createPuzzle(self):
 
