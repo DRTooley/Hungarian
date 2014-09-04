@@ -12,15 +12,25 @@ from PyQt5.QtWidgets import (QApplication, QComboBox, QDialog,
 
 
 class ColoredBall(QWidget):
-    def __init__(self, mycolor, parent=None):
+    def __init__(self, mycolor, pos, ring, parent=None):
         super(ColoredBall, self).__init__(parent)
 
+        self.position = pos
+        self.ring = ring
         self.CreatePath()
         self.penColor = QColor("black")
         self.fillColor1 = QColor(mycolor)
         self.fillColor2 = QColor("white")
         self.penWidth = 1
         self.setBackgroundRole(QPalette.Base)
+
+    def setRing(self, ring):
+        self.ring = ring
+
+    def setPosition(self, pos):
+        self.position = pos
+        if pos == 4 or pos == 19:
+            self.setRing("both")
 
     def CreatePath(self):
         self.path = QPainterPath()
@@ -99,21 +109,32 @@ class myWindow(QWidget):
         self.labels = QGridLayout()
 
 
-        self.labelNorth = ColoredBall("black")
-        self.labelSouth = ColoredBall("maroon")
-        self.labelEast = ColoredBall("green")
-        self.labelWest = ColoredBall("blue")
+        self.AllBalls = []
 
-        self.labels.addWidget(self.labelNorth, 1, 2)
-        self.labels.addWidget(self.labelWest, 2, 1)
-        self.labels.addWidget(self.labelEast, 2, 3)
-        self.labels.addWidget(self.labelSouth, 3, 2)
-#        numCols = 4
-#        numRows = 5
-#        for i in range(numRows):
-#            labels.setRowMinimumHeight(i, 50)
-#        for j in range(numCols):
-#            labels.setColumnMinimumWidth(j, 50)
+        for i in range(9,19):
+            self.AllBalls.append(ColoredBall("black", i, "right"))
+            self.AllBalls.append(ColoredBall("blue", i-5, "left"))
+
+        for i in range(9):
+            self.AllBalls.append(ColoredBall("maroon", i, "right"))
+            if i == 4:
+                self.AllBalls[4].setRing("both")
+        for i in range(4):
+            self.AllBalls.append(ColoredBall("green", i, "left"))
+            self.AllBalls.append(ColoredBall("green", i+15, "left"))
+        self.AllBalls.append(ColoredBall("green", 19, "both"))
+
+        for i in range(len(self.AllBalls)):
+            if self.AllBalls[i].ring is "right":
+                temp = 0
+            elif self.AllBalls[i].ring is "left":
+                temp = 2
+            else:
+                temp = 1
+
+            self.labels.addWidget(self.AllBalls[i], temp, self.AllBalls[i].position)
+
+
 
 
 
@@ -152,8 +173,6 @@ class myWindow(QWidget):
 
 
 if __name__ == '__main__':
-
-
 
     app = QApplication(sys.argv)
     myWindow = myWindow()
