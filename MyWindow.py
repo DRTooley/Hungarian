@@ -2,11 +2,51 @@
 
 import sys
 from math import cos, pi, sin
-
+from PyQt5.QtCore import QSize, Qt
+from PyQt5.QtGui import (QBrush, QColor, QFont, QLinearGradient, QPainter,
+        QPainterPath, QPalette, QPen)
 from PyQt5.QtWidgets import (QApplication, QComboBox, QDialog,
         QDialogButtonBox, QFormLayout, QGridLayout, QGroupBox, QHBoxLayout,
         QLabel, QLineEdit, QMenu, QMenuBar, QPushButton, QSpinBox, QTextEdit,
-        QVBoxLayout)
+        QVBoxLayout, QWidget)
+
+
+class ColoredBall(QWidget):
+    def __init__(self, color, ypos, xpos,  parent=None):
+        super(ColoredBall, self).__init__(parent)
+        self.yPos = ypos
+        self.xPos = xpos
+
+        self.CreatePath()
+
+        self.PenColor = QColor("black")
+        self.FillColor = QColor(color)
+        self.PenWidth = 1
+        self.setBackgroundRole(QPalette.Base)
+
+
+    def CreatePath(self):
+        self.path = QPainterPath()
+        self.path.arcMoveTo(self.yPos, self.xPos, 10.0, 10.0, 360.0)
+        self.path.closeSubpath()
+
+
+    def paintEvent(self, event):
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.Antialiasing)
+        painter.scale(self.width() / 100.0, self.height() / 100.0)
+        painter.translate(50.0, 50.0)
+        painter.rotate(0)
+        painter.translate(-50.0, -50.0)
+
+        painter.setPen(
+                QPen(self.PenColor, self.PenWidth, Qt.SolidLine, Qt.RoundCap,
+                        Qt.RoundJoin))
+        gradient = QLinearGradient(0, 0, 0, 100)
+        gradient.setColorAt(0.0, self.FillColor)
+        gradient.setColorAt(1.0, self.FillColor)
+        painter.setBrush(QBrush(gradient))
+        painter.drawPath(self.path)
 
 
 class myWindow(QDialog):
@@ -28,6 +68,7 @@ class myWindow(QDialog):
         self.btn_RotateCL.clicked.connect(self.rotateCL)
         self.btn_Randomize.clicked.connect(self.Randomize)
         self.btn_Solve.clicked.connect(self.Solve)
+
         self.setLayout(mainLayout)
 
         self.setWindowTitle("Hungarian Solver")
@@ -56,7 +97,7 @@ class myWindow(QDialog):
         labels = QGridLayout()
 
 
-        self.labelNorth = QLabel("North")
+        self.labelNorth = ColoredBall("black",50,150)
         self.labelSouth = QLabel("South")
         self.labelEast = QLabel("East")
         self.labelWest = QLabel("West")
