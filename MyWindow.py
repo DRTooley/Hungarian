@@ -25,6 +25,10 @@ class ColoredBall(QWidget):
         self.penWidth = 1
         self.setBackgroundRole(QPalette.Base)
 
+        colDict = {"black":0, "blue":1, "maroon":2, "green":3}
+
+        self.colNumber = colDict[mycolor]
+
     def setRing(self, ring):
         self.ring = ring
 
@@ -95,6 +99,7 @@ class myWindow(QWidget):
                 self.AllBalls[i].setRing("left")
                 self.AllBalls[i].setPosition(self.AllBalls[i].position-1)
         self.draw()
+        self.isSolved()
 
     def rotateCCR(self):
         for i in range(len(self.AllBalls)):
@@ -102,6 +107,7 @@ class myWindow(QWidget):
                 self.AllBalls[i].setRing("right")
                 self.AllBalls[i].setPosition(self.AllBalls[i].position+1)
         self.draw()
+        self.isSolved()
 
     def rotateCL(self):
         for i in range(len(self.AllBalls)):
@@ -109,6 +115,7 @@ class myWindow(QWidget):
                 self.AllBalls[i].setRing("left")
                 self.AllBalls[i].setPosition(self.AllBalls[i].position+1)
         self.draw()
+        self.isSolved()
 
     def rotateCR(self):
         for i in range(len(self.AllBalls)):
@@ -116,6 +123,7 @@ class myWindow(QWidget):
                 self.AllBalls[i].setRing("right")
                 self.AllBalls[i].setPosition(self.AllBalls[i].position-1)
         self.draw()
+        self.isSolved()
 
     def Randomize(self):
         random.seed()
@@ -134,15 +142,45 @@ class myWindow(QWidget):
     def Solve(self):
         pass
 
+    def sameColorRightAdjacent(self, ball):
+        if(ball.ring is "both"):
+            if ball.position == 4:
+                for i in range(len(self.AllBalls)):
+                    if 5 == self.AllBalls[i].position and ball.colNumber == self.AllBalls[i].colNumber:
+                        return True
+            else:
+                for i in range(len(self.AllBalls)):
+                    if 0 == self.AllBalls[i].position and ball.colNumber == self.AllBalls[i].colNumber:
+                        return True
+        else:
+            for i in range(len(self.AllBalls)):
+                if (ball.position+1) == self.AllBalls[i].position and ball.colNumber == self.AllBalls[i].colNumber:
+                    if ball.ring == self.AllBalls[i].ring or self.AllBalls[i].ring == "both":
+                        return True
+        return False
+
+    def isSolved(self):
+        ballCount = [0, 0, 0, 0]
+        for ball in self.AllBalls:
+            if(self.sameColorRightAdjacent(ball)):
+                ballCount[ball.colNumber]+=1
+            else:
+                print("False! "+ball.ring+" "+str(ball.position))
+        if(ballCount[0] == 9 and ballCount[1] == 9 and ballCount[2] == 8 and ballCount[3] == 8):
+            print("Ball Count [0]:"+str(ballCount[0])+"\n"+"Ball Count [1]:"+str(ballCount[1])+"\n"+"Ball Count [2]:"+str(ballCount[2])+"\n"+ "Ball Count [3]:"+str(ballCount[3])+"\n"+"Solved!")
+            return True
+        else:
+            print("Ball Count [0]:"+str(ballCount[0])+"\n"+"Ball Count [1]:"+str(ballCount[1])+"\n"+"Ball Count [2]:"+str(ballCount[2])+"\n"+ "Ball Count [3]:"+str(ballCount[3])+"\n"+"Not Solved!")
+            return False
+
+
     def draw(self):
         RxDict = [
             6, 5, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 14, 13, 12, 11, 10, 9, 8, 7
         ]
-
         LxDict = [
             8, 9, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0, 0, 1, 2, 3, 4, 5, 6, 7
         ]
-
         yDict = [
             3, 4, 6, 7, 8, 9, 10, 10, 9, 8, 7, 6, 4, 3, 2, 1, 0, 0, 1, 2
         ]
