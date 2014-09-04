@@ -119,7 +119,7 @@ class myWindow(QWidget):
 
     def Randomize(self):
         random.seed()
-        turns = random.randint(200,1000)
+        turns = random.randint(500,1000)
         for i in range(turns):
             choice = random.randint(0,3)
             if(choice == 0):
