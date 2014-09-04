@@ -28,8 +28,13 @@ class ColoredBall(QWidget):
         self.ring = ring
 
     def setPosition(self, pos):
-        self.position = pos
-        if pos == 4 or pos == 19:
+        if pos == -1:
+            self.position = 19
+        elif pos == 20:
+            self.position = 0
+        else:
+            self.position = pos
+        if self.position == 4 or self.position == 19:
             self.setRing("both")
 
     def CreatePath(self):
@@ -86,22 +91,56 @@ class myWindow(QWidget):
         self.setWindowTitle("Hungarian Solver")
 
     def rotateCCL(self):
-        pass
+        for i in range(len(self.AllBalls)):
+            if self.AllBalls[i].ring is not "right":
+                self.AllBalls[i].setRing("left")
+                self.AllBalls[i].setPosition(self.AllBalls[i].position+1)
+        self.renew()
 
     def rotateCCR(self):
-        pass
+        for i in range(len(self.AllBalls)):
+            if self.AllBalls[i].ring is not "left":
+                self.AllBalls[i].setRing("right")
+                self.AllBalls[i].setPosition(self.AllBalls[i].position-1)
+        self.renew()
 
     def rotateCL(self):
-        pass
+        for i in range(len(self.AllBalls)):
+            if self.AllBalls[i].ring is not "right":
+                self.AllBalls[i].setRing("left")
+                self.AllBalls[i].setPosition(self.AllBalls[i].position-1)
+        self.renew()
 
     def rotateCR(self):
-        pass
+        for i in range(len(self.AllBalls)):
+            if self.AllBalls[i].ring is not "left":
+                self.AllBalls[i].setRing("right")
+                self.AllBalls[i].setPosition(self.AllBalls[i].position+1)
+        self.draw()
 
     def Randomize(self):
         pass
 
     def Solve(self):
         pass
+
+    def draw(self):
+        xDict = [-1, -2, -2, -1, 0, 1, 2, 3, 4, 5,
+                 6, 7, 7, 6, 5, 4, 3, 2, 1, 0]
+
+        yDict = [-2, -1, 0, 1, 2, 3, 4, 5, 4, 3, 2, 1,
+                 0, -1, -2, -3, -4, -5, -4, -3]
+
+
+        for i in range(len(self.AllBalls)):
+            if self.AllBalls[i].ring is not "left":
+                horizontal = xDict[self.AllBalls[i].position]
+
+            else:
+                horizontal = -1 * xDict[self.AllBalls[i].position]
+
+            vertical = yDict[self.AllBalls[i].position]
+            self.labels.addWidget(self.AllBalls[i], vertical, horizontal, 3, 1)
 
     def createPuzzle(self):
 
@@ -111,30 +150,20 @@ class myWindow(QWidget):
 
         self.AllBalls = []
 
-        for i in range(9,19):
+        for i in range(9, 19):
             self.AllBalls.append(ColoredBall("black", i, "right"))
-            self.AllBalls.append(ColoredBall("blue", i-5, "left"))
+            self.AllBalls.append(ColoredBall("blue", i-4, "left"))
 
         for i in range(9):
             self.AllBalls.append(ColoredBall("maroon", i, "right"))
             if i == 4:
-                self.AllBalls[4].setRing("both")
+                self.AllBalls[len(self.AllBalls)-1].setRing("both")
         for i in range(4):
             self.AllBalls.append(ColoredBall("green", i, "left"))
             self.AllBalls.append(ColoredBall("green", i+15, "left"))
         self.AllBalls.append(ColoredBall("green", 19, "both"))
 
-        for i in range(len(self.AllBalls)):
-            if self.AllBalls[i].ring is "right":
-                temp = 0
-            elif self.AllBalls[i].ring is "left":
-                temp = 2
-            else:
-                temp = 1
-
-            self.labels.addWidget(self.AllBalls[i], temp, self.AllBalls[i].position)
-
-
+        self.draw()
 
 
 
