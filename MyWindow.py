@@ -118,7 +118,18 @@ class myWindow(QWidget):
         self.draw()
 
     def Randomize(self):
-        pass
+        random.seed()
+        turns = random.randint(200,1000)
+        for i in range(turns):
+            choice = random.randint(0,3)
+            if(choice == 0):
+                self.rotateCCL()
+            elif(choice == 1):
+                self.rotateCCR()
+            elif(choice == 2):
+                self.rotateCL()
+            elif(choice == 3):
+                self.rotateCR()
 
     def Solve(self):
         pass
