@@ -12,19 +12,21 @@ from PyQt5.QtWidgets import (QApplication, QComboBox, QDialog,
 
 
 class ColoredBall(QWidget):
-    def __init__(self, color, ypos, xpos,  parent=None):
+    def __init__(self, mycolor, parent=None):
         super(ColoredBall, self).__init__(parent)
-        self.yPos = ypos
-        self.xPos = xpos
 
         self.CreatePath()
-
-        self.PenColor = QColor("black")
-        self.FillColor1 = QColor(color)
-        self.FillColor2 = QColor("white")
-        self.rotationAngle = 0
-        self.PenWidth = 1
+        self.penColor = QColor("black")
+        self.fillColor1 = QColor(mycolor)
+        self.fillColor2 = QColor("white")
+        self.penWidth = 1
         self.setBackgroundRole(QPalette.Base)
+
+    def CreatePath(self):
+        self.path = QPainterPath()
+        self.path.moveTo(60,35)
+        self.path.arcTo(10, 10, 50.0, 50.0, 0.0, 360.0)
+        self.path.closeSubpath()
 
     def minimumSizeHint(self):
         return QSize(50, 50)
@@ -32,51 +34,22 @@ class ColoredBall(QWidget):
     def sizeHint(self):
         return QSize(100, 100)
 
-    def setFillRule(self, rule):
-        self.path.setFillRule(rule)
-        self.update()
-
-    def setFillGradient(self, color1, color2):
-        self.FillColor1 = color1
-        self.FillColor2 = color2
-        self.update()
-
-    def setPenWidth(self, width):
-        self.penWidth = width
-        self.update()
-
-    def setPenColor(self, color):
-        self.penColor = color
-        self.update()
-
-    def setRotationAngle(self, degrees):
-        self.rotationAngle = degrees
-        self.update()
-
-
-    def CreatePath(self):
-        self.path = QPainterPath()
-        self.path.arcMoveTo(self.yPos, self.xPos, 50.0, 60.0, 360.0)
-        self.path.closeSubpath()
-        self.path.setFillRule(Qt.FillRule(Qt.WindingFill))
 
 
     def paintEvent(self, event):
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing)
         painter.scale(self.width() / 100.0, self.height() / 100.0)
-        painter.translate(50.0, 50.0)
-        painter.rotate(-self.rotationAngle)
-        painter.translate(-50.0, -50.0)
 
         painter.setPen(
-                QPen(self.PenColor, self.PenWidth, Qt.SolidLine, Qt.RoundCap,
+                QPen(self.penColor, self.penWidth, Qt.SolidLine, Qt.RoundCap,
                         Qt.RoundJoin))
         gradient = QLinearGradient(0, 0, 0, 100)
-        gradient.setColorAt(0.0, self.FillColor1)
-        gradient.setColorAt(1.0, self.FillColor2)
+        gradient.setColorAt(0.0, self.fillColor1)
+        gradient.setColorAt(1.0, self.fillColor2)
         painter.setBrush(QBrush(gradient))
         painter.drawPath(self.path)
+
 
 
 class myWindow(QWidget):
@@ -126,10 +99,10 @@ class myWindow(QWidget):
         self.labels = QGridLayout()
 
 
-        self.labelNorth = ColoredBall("black",50.0,200.0)
-        self.labelSouth = ColoredBall("maroon",150.0,200.0)
-        self.labelEast = ColoredBall("green",100.0,150.0)
-        self.labelWest = ColoredBall("blue",100.0,250.0)
+        self.labelNorth = ColoredBall("black")
+        self.labelSouth = ColoredBall("maroon")
+        self.labelEast = ColoredBall("green")
+        self.labelWest = ColoredBall("blue")
 
         self.labels.addWidget(self.labelNorth, 1, 2)
         self.labels.addWidget(self.labelWest, 2, 1)
