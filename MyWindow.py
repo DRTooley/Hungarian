@@ -87,7 +87,6 @@ class myWindow(QWidget):
         self.btn_RotateCR.clicked.connect(self.rotateCR)
         self.btn_RotateCL.clicked.connect(self.rotateCL)
         self.btn_Randomize.clicked.connect(self.Randomize)
-        self.btn_Solve.clicked.connect(self.Solve)
 
         self.setLayout(mainLayout)
 
@@ -99,7 +98,6 @@ class myWindow(QWidget):
                 self.AllBalls[i].setRing("left")
                 self.AllBalls[i].setPosition(self.AllBalls[i].position-1)
         self.draw()
-        self.isSolved()
 
     def rotateCCR(self):
         for i in range(len(self.AllBalls)):
@@ -107,7 +105,6 @@ class myWindow(QWidget):
                 self.AllBalls[i].setRing("right")
                 self.AllBalls[i].setPosition(self.AllBalls[i].position+1)
         self.draw()
-        self.isSolved()
 
     def rotateCL(self):
         for i in range(len(self.AllBalls)):
@@ -115,7 +112,6 @@ class myWindow(QWidget):
                 self.AllBalls[i].setRing("left")
                 self.AllBalls[i].setPosition(self.AllBalls[i].position+1)
         self.draw()
-        self.isSolved()
 
     def rotateCR(self):
         for i in range(len(self.AllBalls)):
@@ -123,7 +119,6 @@ class myWindow(QWidget):
                 self.AllBalls[i].setRing("right")
                 self.AllBalls[i].setPosition(self.AllBalls[i].position-1)
         self.draw()
-        self.isSolved()
 
     def Randomize(self):
         random.seed()
@@ -138,7 +133,7 @@ class myWindow(QWidget):
                 self.rotateCL()
             elif(choice == 3):
                 self.rotateCR()
-
+    """
     def Solve(self):
         pass
 
@@ -172,16 +167,16 @@ class myWindow(QWidget):
         else:
             print("Ball Count [0]:"+str(ballCount[0])+"\n"+"Ball Count [1]:"+str(ballCount[1])+"\n"+"Ball Count [2]:"+str(ballCount[2])+"\n"+ "Ball Count [3]:"+str(ballCount[3])+"\n"+"Not Solved!")
             return False
-
+    """
 
     def draw(self):
-        RxDict = [
+        RxLoc = [
             6, 5, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 14, 13, 12, 11, 10, 9, 8, 7
         ]
-        LxDict = [
+        LxLoc = [
             8, 9, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0, 0, 1, 2, 3, 4, 5, 6, 7
         ]
-        yDict = [
+        yLoc = [
             3, 4, 6, 7, 8, 9, 10, 10, 9, 8, 7, 6, 4, 3, 2, 1, 0, 0, 1, 2
         ]
 
@@ -189,12 +184,12 @@ class myWindow(QWidget):
         for i in range(len(self.AllBalls)):
 
             if self.AllBalls[i].ring is not "left":
-                horizontal = RxDict[self.AllBalls[i].position]
+                horizontal = RxLoc[self.AllBalls[i].position]
 
             else:
-                horizontal = LxDict[self.AllBalls[i].position]
+                horizontal = LxLoc[self.AllBalls[i].position]
 
-            vertical = yDict[self.AllBalls[i].position]
+            vertical = yLoc[self.AllBalls[i].position]
             self.labels.addWidget(self.AllBalls[i], vertical, horizontal, 2, 1)
 
     def createPuzzle(self):
@@ -233,7 +228,6 @@ class myWindow(QWidget):
 
 
         self.btn_Randomize = QPushButton("Randomize the Puzzle")
-        self.btn_Solve = QPushButton("Solve")
 
         buttonColWidth = 215
 
@@ -243,7 +237,6 @@ class myWindow(QWidget):
         self.Buttons.addWidget(self.btn_RotateCR, 2, 0)
         self.Buttons.addWidget(self.btn_RotateCCR, 2, 1)
         self.Buttons.addWidget(self.btn_Randomize, 4, 0)
-        self.Buttons.addWidget(self.btn_Solve, 4, 1)
 
 #        numRows=6 #runs through each row to ensure padding, also adds padding to top and bottom rows
 #
