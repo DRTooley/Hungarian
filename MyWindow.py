@@ -11,6 +11,9 @@ from PyQt5.QtWidgets import (QApplication, QComboBox, QDialog,
         QLabel, QLineEdit, QMenu, QMenuBar, QPushButton, QSpinBox, QTextEdit,
         QVBoxLayout, QWidget)
 
+##########################################################################################################
+################## Code for the data structures ##########################################################
+##########################################################################################################
 
 class ColoredBall(QWidget):
     def __init__(self, mycolor, pos, ring, parent=None):
@@ -72,70 +75,116 @@ class ColoredBall(QWidget):
 
 
 
-class myWindow(QWidget):
+
+class HungarianRings:
     def __init__(self):
-        super(myWindow, self).__init__()
-
-        mainLayout = QHBoxLayout()
-
         self.createPuzzle()
-        mainLayout.addLayout(self.labels)
-        self.createControl()
-        mainLayout.addLayout(self.Buttons)
-        self.btn_RotateCCL.clicked.connect(self.rotateCCL)
-        self.btn_RotateCCR.clicked.connect(self.rotateCCR)
-        self.btn_RotateCR.clicked.connect(self.rotateCR)
-        self.btn_RotateCL.clicked.connect(self.rotateCL)
-        self.btn_Randomize.clicked.connect(self.Randomize)
 
-        self.setLayout(mainLayout)
 
-        self.setWindowTitle("Hungarian Solver")
+##########################################################################################################
+################## Code for the randomizer ###############################################################
+##########################################################################################################
+
+    def choose(self):
+        choice = random.randint(0, 3)
+        if(choice == 0):
+            if self.incrementTracker(choice):
+                self.rotateCCL()
+        elif(choice == 1):
+            if self.incrementTracker(choice):
+                self.rotateCCR()
+        elif(choice == 2):
+            if self.incrementTracker(choice):
+                self.rotateCL()
+        elif(choice == 3):
+            if self.incrementTracker(choice):
+                self.rotateCR()
+
+    def incrementTracker(self, choice):
+        undoMap = [2,3,0,1]
+        if(self.tracker[0] == choice):
+            if self.tracker[1] <9:
+                self.tracker[1]+=1
+                return True
+            else:
+                self.choose()
+                return False
+        elif undoMap[choice] == self.tracker[0]: #if the new choice undoes the last choice choose again
+            self.choose()
+            return False
+        else:
+            tracker = [choice, 1]
+            return True
+
+    def Randomize(self, turns):
+        random.seed()
+        self.tracker = [0, 0]
+        for i in range(turns):
+            self.choose()
+
+
+##########################################################################################################
+################## End Randomizer ########################################################################
+##########################################################################################################
+
+    def createPuzzle(self):
+        self.AllBalls = []
+
+        for i in range(9, 19):
+            self.AllBalls.append(ColoredBall("black", i, "right"))
+            self.AllBalls.append(ColoredBall("blue", i-4, "left"))
+
+        for i in range(9):
+            self.AllBalls.append(ColoredBall("maroon", i, "right"))
+            if i == 4:
+                self.AllBalls[len(self.AllBalls)-1].setRing("both")
+        for i in range(4):
+            self.AllBalls.append(ColoredBall("green", i, "left"))
+            self.AllBalls.append(ColoredBall("green", i+15, "left"))
+        self.AllBalls.append(ColoredBall("green", 19, "both"))
+
+    def isSolved(self):
+        ballCount = [0, 0, 0, 0]
+        for ball in self.AllBalls:
+            if(self.sameColorRightAdjacent(ball)):
+                ballCount[ball.colNumber]+=1
+            else:
+                print("False! "+ball.ring+" "+str(ball.position))
+        if(ballCount[0] == 9 and ballCount[1] == 9 and ballCount[2] == 8 and ballCount[3] == 8):
+            print("Ball Count [0]:"+str(ballCount[0])+"\n"+"Ball Count [1]:"+str(ballCount[1])+"\n"+"Ball Count [2]:"+str(ballCount[2])+"\n"+ "Ball Count [3]:"+str(ballCount[3])+"\n"+"Solved!")
+            return True
+        else:
+            print("Ball Count [0]:"+str(ballCount[0])+"\n"+"Ball Count [1]:"+str(ballCount[1])+"\n"+"Ball Count [2]:"+str(ballCount[2])+"\n"+ "Ball Count [3]:"+str(ballCount[3])+"\n"+"Not Solved!")
+            return False
+
+    def Solve(self):
+        pass
+
 
     def rotateCCL(self):
         for i in range(len(self.AllBalls)):
             if self.AllBalls[i].ring is not "right":
                 self.AllBalls[i].setRing("left")
                 self.AllBalls[i].setPosition(self.AllBalls[i].position-1)
-        self.draw()
 
     def rotateCCR(self):
         for i in range(len(self.AllBalls)):
             if self.AllBalls[i].ring is not "left":
                 self.AllBalls[i].setRing("right")
                 self.AllBalls[i].setPosition(self.AllBalls[i].position+1)
-        self.draw()
 
     def rotateCL(self):
         for i in range(len(self.AllBalls)):
             if self.AllBalls[i].ring is not "right":
                 self.AllBalls[i].setRing("left")
                 self.AllBalls[i].setPosition(self.AllBalls[i].position+1)
-        self.draw()
 
     def rotateCR(self):
         for i in range(len(self.AllBalls)):
             if self.AllBalls[i].ring is not "left":
                 self.AllBalls[i].setRing("right")
                 self.AllBalls[i].setPosition(self.AllBalls[i].position-1)
-        self.draw()
 
-    def Randomize(self):
-        random.seed()
-        turns = random.randint(500,1000)
-        for i in range(turns):
-            choice = random.randint(0,3)
-            if(choice == 0):
-                self.rotateCCL()
-            elif(choice == 1):
-                self.rotateCCR()
-            elif(choice == 2):
-                self.rotateCL()
-            elif(choice == 3):
-                self.rotateCR()
-    """
-    def Solve(self):
-        pass
 
     def sameColorRightAdjacent(self, ball):
         if(ball.ring is "both"):
@@ -154,66 +203,78 @@ class myWindow(QWidget):
                         return True
         return False
 
-    def isSolved(self):
-        ballCount = [0, 0, 0, 0]
-        for ball in self.AllBalls:
-            if(self.sameColorRightAdjacent(ball)):
-                ballCount[ball.colNumber]+=1
-            else:
-                print("False! "+ball.ring+" "+str(ball.position))
-        if(ballCount[0] == 9 and ballCount[1] == 9 and ballCount[2] == 8 and ballCount[3] == 8):
-            print("Ball Count [0]:"+str(ballCount[0])+"\n"+"Ball Count [1]:"+str(ballCount[1])+"\n"+"Ball Count [2]:"+str(ballCount[2])+"\n"+ "Ball Count [3]:"+str(ballCount[3])+"\n"+"Solved!")
-            return True
-        else:
-            print("Ball Count [0]:"+str(ballCount[0])+"\n"+"Ball Count [1]:"+str(ballCount[1])+"\n"+"Ball Count [2]:"+str(ballCount[2])+"\n"+ "Ball Count [3]:"+str(ballCount[3])+"\n"+"Not Solved!")
-            return False
-    """
+
+##########################################################################################################
+################## End Data Structures ###################################################################
+##########################################################################################################
+
+
+class myGUI(QWidget):
+    def __init__(self):
+        super(myGUI, self).__init__()
+
+        mainLayout = QHBoxLayout()
+        self.labels = QGridLayout()
+        self.HR = HungarianRings()
+        mainLayout.addLayout(self.labels)
+        self.draw()
+        self.createControl()
+        mainLayout.addLayout(self.Buttons)
+        self.btn_RotateCCL.clicked.connect(self.rotateCCL)
+        self.btn_RotateCCR.clicked.connect(self.rotateCCR)
+        self.btn_RotateCR.clicked.connect(self.rotateCR)
+        self.btn_RotateCL.clicked.connect(self.rotateCL)
+        self.btn_Randomize.clicked.connect(self.Randomize)
+
+        self.setLayout(mainLayout)
+
+        self.setWindowTitle("Hungarian Solver")
+
+
+    def rotateCCL(self):
+        self.HR.rotateCCL()
+        self.draw()
+
+    def rotateCCR(self):
+        self.HR.rotateCCR()
+        self.draw()
+
+    def rotateCL(self):
+        self.HR.rotateCL()
+        self.draw()
+
+    def rotateCR(self):
+        self.HR.rotateCR()
+        self.draw()
+
+    def Randomize(self):
+        self.HR.Randomize(self.RanomizeCounter.value())
+        self.draw()
 
     def draw(self):
-        RxLoc = [
+        RxDict = [
             6, 5, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 14, 13, 12, 11, 10, 9, 8, 7
         ]
-        LxLoc = [
+        LxDict = [
             8, 9, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0, 0, 1, 2, 3, 4, 5, 6, 7
         ]
-        yLoc = [
+        yDict = [
             3, 4, 6, 7, 8, 9, 10, 10, 9, 8, 7, 6, 4, 3, 2, 1, 0, 0, 1, 2
         ]
 
 
-        for i in range(len(self.AllBalls)):
+        for i in range(len(self.HR.AllBalls)):
 
-            if self.AllBalls[i].ring is not "left":
-                horizontal = RxLoc[self.AllBalls[i].position]
+            if self.HR.AllBalls[i].ring is not "left":
+                horizontal = RxDict[self.HR.AllBalls[i].position]
 
             else:
-                horizontal = LxLoc[self.AllBalls[i].position]
+                horizontal = LxDict[self.HR.AllBalls[i].position]
 
-            vertical = yLoc[self.AllBalls[i].position]
-            self.labels.addWidget(self.AllBalls[i], vertical, horizontal, 2, 1)
-
-    def createPuzzle(self):
+            vertical = yDict[self.HR.AllBalls[i].position]
+            self.labels.addWidget(self.HR.AllBalls[i], vertical, horizontal, 2, 2)
 
 
-        self.labels = QGridLayout()
-
-
-        self.AllBalls = []
-
-        for i in range(9, 19):
-            self.AllBalls.append(ColoredBall("black", i, "right"))
-            self.AllBalls.append(ColoredBall("blue", i-4, "left"))
-
-        for i in range(9):
-            self.AllBalls.append(ColoredBall("maroon", i, "right"))
-            if i == 4:
-                self.AllBalls[len(self.AllBalls)-1].setRing("both")
-        for i in range(4):
-            self.AllBalls.append(ColoredBall("green", i, "left"))
-            self.AllBalls.append(ColoredBall("green", i+15, "left"))
-        self.AllBalls.append(ColoredBall("green", 19, "both"))
-
-        self.draw()
 
 
 
@@ -228,6 +289,9 @@ class myWindow(QWidget):
 
 
         self.btn_Randomize = QPushButton("Randomize the Puzzle")
+        self.RanomizeCounter = QSpinBox()
+        self.RanomizeCounter.setRange(0, 99999999)
+        self.RanomizeCounter.setSingleStep(1)
 
         buttonColWidth = 215
 
@@ -237,14 +301,10 @@ class myWindow(QWidget):
         self.Buttons.addWidget(self.btn_RotateCR, 2, 0)
         self.Buttons.addWidget(self.btn_RotateCCR, 2, 1)
         self.Buttons.addWidget(self.btn_Randomize, 4, 0)
+        self.Buttons.addWidget(self.RanomizeCounter,4,1)
 
-#        numRows=6 #runs through each row to ensure padding, also adds padding to top and bottom rows
-#
-#        for i in range(numRows):
-#            Buttons.setRowMinimumHeight(i,10)
-#
-#        Buttons.setColumnMinimumWidth(0, buttonColWidth)
-#        Buttons.setColumnMinimumWidth(1, buttonColWidth)
+
+
 
 
 
@@ -252,7 +312,7 @@ class myWindow(QWidget):
 if __name__ == '__main__':
 
     app = QApplication(sys.argv)
-    myWindow = myWindow()
-    myWindow.show()
+    myGUI = myGUI()
+    myGUI.show()
     sys.exit(app.exec_())
 
