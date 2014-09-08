@@ -85,35 +85,42 @@ class HungarianRings:
 ################## Code for the randomizer ###############################################################
 ##########################################################################################################
 
+    def choose(self):
+        choice = random.randint(0, 3)
+        if(choice == 0):
+            if self.incrementTracker(choice):
+                self.rotateCCL()
+        elif(choice == 1):
+            if self.incrementTracker(choice):
+                self.rotateCCR()
+        elif(choice == 2):
+            if self.incrementTracker(choice):
+                self.rotateCL()
+        elif(choice == 3):
+            if self.incrementTracker(choice):
+                self.rotateCR()
+
+    def incrementTracker(self, choice):
+        undoMap = [2,3,0,1]
+        if(self.tracker[0] == choice):
+            if self.tracker[1] <9:
+                self.tracker[1]+=1
+                return True
+            else:
+                self.choose()
+                return False
+        elif undoMap[choice] == self.tracker[0]: #if the new choice undoes the last choice choose again
+            self.choose()
+            return False
+        else:
+            tracker = [choice, 1]
+            return True
+
     def Randomize(self, turns):
         random.seed()
-        tracker = [0, 0]
+        self.tracker = [0, 0]
         for i in range(turns):
-            choice = random.randint(0,3)
-            if(choice == 0 and tracker[0] != 2):
-                self.rotateCCL()
-                if(tracker[0] == 0):
-                    tracker[1]+=1
-                else:
-                    tracker = [0, 1]
-            elif(choice == 1 and tracker[0] != 3):
-                self.rotateCCR()
-                if(tracker[0] == 1):
-                    tracker[1]+=1
-                else:
-                    tracker = [1, 1]
-            elif(choice == 2 and tracker [0] != 0):
-                self.rotateCL()
-                if(tracker[0] == 2):
-                    tracker[1]+=1
-                else:
-                    tracker = [2, 1]
-            elif(choice == 3 and tracker[0] != 1):
-                self.rotateCR()
-                if(tracker[0] == 3):
-                    tracker[1]+=1
-                else:
-                    tracker = [3, 1]
+            self.choose()
 
 
 ##########################################################################################################
