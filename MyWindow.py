@@ -22,17 +22,22 @@ class IDAstarController():
         self.f_limit = 1
         self.Solved = False
         self.Tree = [self.Root, None, None, None]
+        self.PQ = []
+        heapq.heappush(self.PQ, (self.Root.GetSum(), self.Root))
 
         self.ida_star()
 
     def ida_star(self):
         self.f_limit = self.Root.GetHeuristic()
         while not self.Solved:
-            f_next = self.search(self.Root)
-            print("f_next: ", f_next)
+            f_next = self.search(heapq.heappop(self.PQ)[1])
+
+            print("f_next     : ", f_next)
             if f_next == 0:
                 return
             self.Tree = [self.Root, None, None, None]
+            self.PQ = []
+            heapq.heappush(self.PQ, (self.Root.GetSum(), self.Root))
             self.f_limit = f_next
 
     def search(self, node):
@@ -42,25 +47,34 @@ class IDAstarController():
             #print("f > f_limit: ", f)
             return f
         if node.GetHeuristic() == 0:
-            print("Solution found at ["+ str(node.GetIndex()[0]) + ", " +str(node.GetIndex()[1]) + "] (in node)")
+            print("Moves made : ", node.GetDepth())
+            #print("Solution found at ["+ str(node.GetIndex()[0]) + ", " +str(node.GetIndex()[1]) + "] (in node)")
             return 0
-        f_next = 100
-        for child in self.expand(node):
-            temp = self.search(child)
-            if temp == 0:
-                print("Solution found at ["+ str(child.GetIndex()[0]) + ", " +str(child.GetIndex()[1]) + "] (in expand)")
-                return 0
-            if temp < f_next:
-                f_next = temp
+        f_next = self.expand(node)
+        if len(self.PQ) == 0:
+            return f_next
+        nextNode = heapq.heappop(self.PQ)[1]
+        temp = self.search(nextNode)
+        if temp == 0:
+            print("Solution found at ["+ str(nextNode.GetIndex()[0]) + ", " +str(nextNode.GetIndex()[1]) + "] (in expand)")
+            return 0
+        if temp < f_next:
+            f_next = temp
 
         return f_next
 
     def expand(self, node):
+        f_next = 100
         myArr = []
         for i in range(4):
-            myArr.append(IterativeDeepeningAStar(node.GetPuzzle(), node.GetDepth()+1, node.GetIndex(), [len(self.Tree),i],i))
+            temp = IterativeDeepeningAStar(node.GetPuzzle(), node.GetDepth()+1, node.GetIndex(), [len(self.Tree),i],i)
+            if temp.GetSum() <= self.f_limit:
+                myArr.append(temp)
+                heapq.heappush(self.PQ, (temp.GetSum(),temp))
+            elif temp.GetSum() < f_next:
+                f_next = temp.GetSum()
         self.Tree.append(myArr)
-        return myArr
+        return f_next
 
 class IterativeDeepeningAStar():
     def __init__(self, puzzle, depth=0, parentnumber=[None,None], mynumber=[0,0], move=None):
@@ -82,6 +96,18 @@ class IterativeDeepeningAStar():
         self.HeuristicVal = self.Puzzle.getHeuristicVal()
         self.Sum = self.HeuristicVal + self.Depth
 
+    def __lt__(self,other):
+        return self.GetSum() < other.GetSum()
+
+    def __gt__(self, other):
+        return self.GetSum() > other.GetSum()
+
+    def __ge__(self, other):
+        return self.GetSum() >= other.GetSum()
+
+    def __le__(self, other):
+        return self.GetSum() <= other.GetSum()
+
     def InfoPrint(self):
         print("Depth           : ", self.Depth)
         print("Heuristic Value : ", self.HeuristicVal)
@@ -89,6 +115,7 @@ class IterativeDeepeningAStar():
         print("Me              : [", self.MyIndex[0], ", ", self.MyIndex[1], "]")
         print("My Move         : ", self.Direction)
         print("")
+
     def GetSum(self):
         return self.Sum
     def GetHeuristic(self):
