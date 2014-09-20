@@ -36,11 +36,12 @@ class IDAstarController():
 
     def search(self, node):
         f = node.GetSum()
+        node.InfoPrint()
         if f > self.f_limit:
             #print("f > f_limit: ", f)
             return f
         if node.GetHeuristic() == 0:
-            print("Solution found at ["+ str(node.GetIndex()[0]) + ", " +str(node.GetIndex()[1]) + "] - (in node)")
+            print("Solution found at ["+ str(node.GetIndex()[0]) + ", " +str(node.GetIndex()[1]) + "] (in node)")
             return 0
         f_next = 100
         for child in self.expand(node):
@@ -69,17 +70,24 @@ class IterativeDeepeningAStar():
         self.Direction = move
 
         if(self.Direction == 0):
-                self.Puzzle.rotateCCL()
+            self.Puzzle.rotateCCL()
         elif(self.Direction == 1):
-                self.Puzzle.rotateCCR()
+            self.Puzzle.rotateCCR()
         elif(self.Direction == 2):
-                self.Puzzle.rotateCL()
+            self.Puzzle.rotateCL()
         elif(self.Direction == 3):
-                self.Puzzle.rotateCR()
+            self.Puzzle.rotateCR()
 
         self.HeuristicVal = self.Puzzle.getHeuristicVal()
         self.Sum = self.HeuristicVal + self.Depth
 
+    def InfoPrint(self):
+        print("Depth           : ", self.Depth)
+        print("Heuristic Value : ", self.HeuristicVal)
+        print("Parent          : [", self.PredecessorIndex[0], ", ", self.PredecessorIndex[1], "]")
+        print("Me              : [", self.MyIndex[0], ", ", self.MyIndex[1], "]")
+        print("My Move         : ", self.Direction)
+        print("")
     def GetSum(self):
         return self.Sum
     def GetHeuristic(self):
@@ -100,6 +108,7 @@ class ColoredBall(QWidget):
     def __init__(self, mycolor, pos, ring, parent=None):
         super(ColoredBall, self).__init__(parent)
 
+        self.MyColor = mycolor
         self.position = pos
         self.ring = ring
         self.CreatePath()
@@ -112,6 +121,13 @@ class ColoredBall(QWidget):
         colDict = {"black":0, "blue":1, "maroon":2, "green":3}
 
         self.colNumber = colDict[mycolor]
+
+    def GetColor(self):
+        return self.MyColor
+    def GetPos(self):
+        return self.position
+    def GetRing(self):
+        return self.ring
 
     def setRing(self, ring):
         self.ring = ring
@@ -164,7 +180,7 @@ class HungarianRings:
             self.createPuzzle()
         else:
             for ball in CopyPuzzle.GetBalls():
-                self.AllBalls.append(ball)
+                self.AllBalls.append(ColoredBall(ball.GetColor(), ball.GetPos(), ball.GetRing()))
 
 
     def getHeuristicVal(self):
