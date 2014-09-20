@@ -2,6 +2,7 @@
 
 import sys
 import random
+import heapq
 
 from PyQt5.QtCore import QSize, Qt
 from PyQt5.QtGui import (QBrush, QColor, QFont, QLinearGradient, QPainter,
