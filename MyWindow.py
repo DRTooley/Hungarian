@@ -204,7 +204,7 @@ class HungarianRings:
                 self.rotateCR()
 
     def incrementTracker(self, choice):
-        undoMap = [2,3,0,1]
+        undoMap = [2,3,0,1] #choice 0 reverses choice 2, choice 1 reveres choice 3, choice 2 reverses choice 0, choice 3 reveres choice 1
         if(self.tracker[0] == choice):
             if self.tracker[1] <9:
                 self.tracker[1]+=1
