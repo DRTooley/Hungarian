@@ -15,6 +15,87 @@ from PyQt5.QtWidgets import (QApplication, QComboBox, QDialog,
 ################## Code for the data structures ##########################################################
 ##########################################################################################################
 
+class IDAstarController():
+    def __init__(self, puzzle):
+        self.Root = IterativeDeepeningAStar(puzzle)
+        self.f_limit = 1
+        self.Solved = False
+        self.Tree = [self.Root, None, None, None]
+
+        self.ida_star()
+
+    def ida_star(self):
+        self.f_limit = self.Root.GetHeuristic()
+        while not self.Solved:
+            f_next = self.search(self.Root)
+            print("f_next: ", f_next)
+            if f_next == 0:
+                return
+            self.Tree = [self.Root, None, None, None]
+            self.f_limit = f_next
+
+    def search(self, node):
+        f = node.GetSum()
+        if f > self.f_limit:
+            #print("f > f_limit: ", f)
+            return f
+        if node.GetHeuristic() == 0:
+            print("Solution found at ["+ str(node.GetIndex()[0]) + ", " +str(node.GetIndex()[1]) + "] - (in node)")
+            return 0
+        f_next = 100
+        for child in self.expand(node):
+            temp = self.search(child)
+            if temp == 0:
+                print("Solution found at ["+ str(child.GetIndex()[0]) + ", " +str(child.GetIndex()[1]) + "] (in expand)")
+                return 0
+            if temp < f_next:
+                f_next = temp
+
+        return f_next
+
+    def expand(self, node):
+        myArr = []
+        for i in range(4):
+            myArr.append(IterativeDeepeningAStar(node.GetPuzzle(), node.GetDepth()+1, node.GetIndex(), [len(self.Tree),i],i))
+        self.Tree.append(myArr)
+        return myArr
+
+class IterativeDeepeningAStar():
+    def __init__(self, puzzle, depth=0, parentnumber=[None,None], mynumber=[0,0], move=None):
+        self.Puzzle = HungarianRings(puzzle)
+        self.Depth = depth
+        self.PredecessorIndex = parentnumber
+        self.MyIndex = mynumber
+        self.Direction = move
+
+        if(self.Direction == 0):
+                self.Puzzle.rotateCCL()
+        elif(self.Direction == 1):
+                self.Puzzle.rotateCCR()
+        elif(self.Direction == 2):
+                self.Puzzle.rotateCL()
+        elif(self.Direction == 3):
+                self.Puzzle.rotateCR()
+
+        self.HeuristicVal = self.Puzzle.getHeuristicVal()
+        self.Sum = self.HeuristicVal + self.Depth
+
+    def GetSum(self):
+        return self.Sum
+    def GetHeuristic(self):
+        return self.HeuristicVal
+    def GetDepth(self):
+        return self.Depth
+    def GetMove(self):
+        return self.Direction
+    def GetParentIndex(self):
+        return self.PredecessorIndex
+    def GetIndex(self):
+        return self.MyIndex
+    def GetPuzzle(self):
+        return self.Puzzle
+
+
 class ColoredBall(QWidget):
     def __init__(self, mycolor, pos, ring, parent=None):
         super(ColoredBall, self).__init__(parent)
@@ -77,9 +158,31 @@ class ColoredBall(QWidget):
 
 
 class HungarianRings:
-    def __init__(self):
-        self.createPuzzle()
+    def __init__(self, CopyPuzzle=None):
+        self.AllBalls = []
+        if CopyPuzzle==None:
+            self.createPuzzle()
+        else:
+            for ball in CopyPuzzle.GetBalls():
+                self.AllBalls.append(ball)
 
+
+    def getHeuristicVal(self):
+        ballCount = [0, 0, 0, 0]
+        #Implement Heuristic here
+
+        for ball in self.AllBalls:
+            if(self.sameColorRightAdjacent(ball)):
+                ballCount[ball.colNumber]+=1
+            else:
+                pass#print("False! "+ball.ring+" "+str(ball.position))
+        if(ballCount[0] == 9 and ballCount[1] == 9 and ballCount[2] == 8 and ballCount[3] == 8):
+            #print("Ball Count [0]:"+str(ballCount[0])+"\n"+"Ball Count [1]:"+str(ballCount[1])+"\n"+"Ball Count [2]:"+str(ballCount[2])+"\n"+ "Ball Count [3]:"+str(ballCount[3])+"\n"+"Solved!")
+            return 0
+        else:
+            #print("Ball Count [0]:"+str(ballCount[0])+"\n"+"Ball Count [1]:"+str(ballCount[1])+"\n"+"Ball Count [2]:"+str(ballCount[2])+"\n"+ "Ball Count [3]:"+str(ballCount[3])+"\n"+"Not Solved!")
+            num = int((ballCount[0]+ ballCount[1] + ballCount[2] + ballCount[3] - 34)*(-0.5))
+            return num
 
 ##########################################################################################################
 ################## Code for the randomizer ###############################################################
@@ -122,13 +225,15 @@ class HungarianRings:
         for i in range(turns):
             self.choose()
 
+    def GetBalls(self):
+        return self.AllBalls
+
 
 ##########################################################################################################
 ################## End Randomizer ########################################################################
 ##########################################################################################################
 
     def createPuzzle(self):
-        self.AllBalls = []
 
         for i in range(9, 19):
             self.AllBalls.append(ColoredBall("black", i, "right"))
@@ -143,22 +248,7 @@ class HungarianRings:
             self.AllBalls.append(ColoredBall("green", i+15, "left"))
         self.AllBalls.append(ColoredBall("green", 19, "both"))
 
-    def isSolved(self):
-        ballCount = [0, 0, 0, 0]
-        for ball in self.AllBalls:
-            if(self.sameColorRightAdjacent(ball)):
-                ballCount[ball.colNumber]+=1
-            else:
-                print("False! "+ball.ring+" "+str(ball.position))
-        if(ballCount[0] == 9 and ballCount[1] == 9 and ballCount[2] == 8 and ballCount[3] == 8):
-            print("Ball Count [0]:"+str(ballCount[0])+"\n"+"Ball Count [1]:"+str(ballCount[1])+"\n"+"Ball Count [2]:"+str(ballCount[2])+"\n"+ "Ball Count [3]:"+str(ballCount[3])+"\n"+"Solved!")
-            return True
-        else:
-            print("Ball Count [0]:"+str(ballCount[0])+"\n"+"Ball Count [1]:"+str(ballCount[1])+"\n"+"Ball Count [2]:"+str(ballCount[2])+"\n"+ "Ball Count [3]:"+str(ballCount[3])+"\n"+"Not Solved!")
-            return False
 
-    def Solve(self):
-        pass
 
 
     def rotateCCL(self):
@@ -225,11 +315,19 @@ class myGUI(QWidget):
         self.btn_RotateCR.clicked.connect(self.rotateCR)
         self.btn_RotateCL.clicked.connect(self.rotateCL)
         self.btn_Randomize.clicked.connect(self.Randomize)
+        self.btn_Reset.clicked.connect(self.Reset)
+        self.btn_Solve.clicked.connect(self.IDAstar)
 
         self.setLayout(mainLayout)
 
         self.setWindowTitle("Hungarian Solver")
 
+    def IDAstar(self):
+        IDAstarController(self.HR)
+
+    def Reset(self):
+        self.HR = HungarianRings()
+        self.draw()
 
     def rotateCCL(self):
         self.HR.rotateCCL()
@@ -281,11 +379,13 @@ class myGUI(QWidget):
     def createControl(self):
         self.Buttons = QGridLayout()
 
+        self.btn_Reset = QPushButton("Reset")
         self.btn_RotateCL = QPushButton("Rotate Left Side Clockwise")
         self.btn_RotateCCL = QPushButton("Rotate Left Side Counter-Clockwise")
 
         self.btn_RotateCR = QPushButton("Rotate Right Side Clockwise")
         self.btn_RotateCCR = QPushButton("Rotate Right Side Counter-Clockwise")
+        self.btn_Solve = QPushButton("Solve")
 
 
         self.btn_Randomize = QPushButton("Randomize the Puzzle")
@@ -293,7 +393,8 @@ class myGUI(QWidget):
         self.RanomizeCounter.setRange(0, 99999999)
         self.RanomizeCounter.setSingleStep(1)
 
-        buttonColWidth = 215
+
+
 
 
         self.Buttons.addWidget(self.btn_RotateCL, 1, 0)
@@ -301,7 +402,10 @@ class myGUI(QWidget):
         self.Buttons.addWidget(self.btn_RotateCR, 2, 0)
         self.Buttons.addWidget(self.btn_RotateCCR, 2, 1)
         self.Buttons.addWidget(self.btn_Randomize, 4, 0)
-        self.Buttons.addWidget(self.RanomizeCounter,4,1)
+        self.Buttons.addWidget(self.RanomizeCounter, 4, 1)
+        self.Buttons.addWidget(self.btn_Reset,5,1)
+        self.Buttons.addWidget(self.btn_Solve,5,0)
+
 
 
 
