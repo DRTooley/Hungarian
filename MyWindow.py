@@ -20,61 +20,79 @@ class IDAstarController():
     def __init__(self, puzzle):
         self.Root = IterativeDeepeningAStar(puzzle)
         self.f_limit = 1
-        self.Solved = False
         self.Tree = [self.Root, None, None, None]
         self.PQ = []
+        self.NodesExpanded =0
         heapq.heappush(self.PQ, (self.Root.GetSum(), self.Root))
 
-        self.ida_star()
+        self.SolvedNode = self.ida_star()
+        print("Nodes Expanded in final iteration: ", self.NodesExpanded)
 
     def ida_star(self):
         self.f_limit = self.Root.GetHeuristic()
-        while not self.Solved:
-            f_next = self.search(heapq.heappop(self.PQ)[1])
+        while True:
+            f_next, SolvedNode = self.search(heapq.heappop(self.PQ)[1])
 
-            print("f_next     : ", f_next)
+
             if f_next == 0:
-                return
+                return SolvedNode
+            else:
+                print("f_next : ", f_next, " (",self.NodesExpanded,")")#Progress Check
             self.Tree = [self.Root, None, None, None]
             self.PQ = []
             heapq.heappush(self.PQ, (self.Root.GetSum(), self.Root))
             self.f_limit = f_next
+            self.NodesExpanded=0
 
     def search(self, node):
-        f = node.GetSum()
-        node.InfoPrint()
-        if f > self.f_limit:
-            #print("f > f_limit: ", f)
-            return f
-        if node.GetHeuristic() == 0:
-            print("Moves made : ", node.GetDepth())
-            #print("Solution found at ["+ str(node.GetIndex()[0]) + ", " +str(node.GetIndex()[1]) + "] (in node)")
-            return 0
-        f_next = self.expand(node)
-        if len(self.PQ) == 0:
-            return f_next
-        nextNode = heapq.heappop(self.PQ)[1]
-        temp = self.search(nextNode)
-        if temp == 0:
-            print("Solution found at ["+ str(nextNode.GetIndex()[0]) + ", " +str(nextNode.GetIndex()[1]) + "] (in expand)")
-            return 0
-        if temp < f_next:
-            f_next = temp
+        f_next = 100
+        temp, SolvedNode = self.expand(node)
+        self.NodesExpanded+=1
+        while True:
+            if temp == 0:
+                print("Solution found at ["+ str(SolvedNode.GetIndex()[0]) + ", " +str(SolvedNode.GetIndex()[1]) + "] (",SolvedNode.GetSum(),")")
+                return 0, SolvedNode
+            if temp < f_next:
+                f_next = temp
 
-        return f_next
+            if len(self.PQ) == 0:
+                return f_next, None
+            nextNode = heapq.heappop(self.PQ)[1]
+            temp, SolvedNode = self.expand(nextNode)
+            self.NodesExpanded+=1
+
+        return f_next, None
 
     def expand(self, node):
+        f = node.GetSum()
+        #node.InfoPrint()#Debuging
+        if f > self.f_limit:
+            #print("f > f_limit: ", f)
+            return f, None
+        if node.GetHeuristic() == 0:
+            #print("Moves made : ", node.GetDepth())
+            #print("Solution found at ["+ str(node.GetIndex()[0]) + ", " +str(node.GetIndex()[1]) + "] (in node)")
+            return 0, node
         f_next = 100
         myArr = []
+        NotAccepted = 0
         for i in range(4):
-            temp = IterativeDeepeningAStar(node.GetPuzzle(), node.GetDepth()+1, node.GetIndex(), [len(self.Tree),i],i)
+            temp = IterativeDeepeningAStar(node.GetPuzzle(), node.GetDepth()+1, node.GetIndex(), [len(self.Tree),i-NotAccepted],i)
             if temp.GetSum() <= self.f_limit:
                 myArr.append(temp)
                 heapq.heappush(self.PQ, (temp.GetSum(),temp))
             elif temp.GetSum() < f_next:
                 f_next = temp.GetSum()
+                NotAccepted+=1
         self.Tree.append(myArr)
-        return f_next
+
+        return f_next, None
+
+    def GetSolvedPuzzle(self):
+        if self.SolvedNode != None:
+            return self.SolvedNode.GetPuzzle()
+        else:
+            return self.Root.GetPuzzle()
 
 class IterativeDeepeningAStar():
     def __init__(self, puzzle, depth=0, parentnumber=[None,None], mynumber=[0,0], move=None):
@@ -96,17 +114,18 @@ class IterativeDeepeningAStar():
         self.HeuristicVal = self.Puzzle.getHeuristicVal()
         self.Sum = self.HeuristicVal + self.Depth
 
-    def __lt__(self,other):
-        return self.GetSum() < other.GetSum()
+    def __lt__(self, other):
+        if self.GetSum() == other.GetSum():
+            return self.GetHeuristic() < other.GetHeuristic()
+        else:
+            return self.GetSum() < other.GetSum()
 
     def __gt__(self, other):
-        return self.GetSum() > other.GetSum()
+        if self.GetSum() == other.GetSum():
+            return self.GetHeuristic() > other.GetHeuristic()
+        else:
+            return self.GetSum() > other.GetSum()
 
-    def __ge__(self, other):
-        return self.GetSum() >= other.GetSum()
-
-    def __le__(self, other):
-        return self.GetSum() <= other.GetSum()
 
     def InfoPrint(self):
         print("Depth           : ", self.Depth)
@@ -211,12 +230,14 @@ class HungarianRings:
                 self.AllBalls.append(ColoredBall(ball.GetColor(), ball.GetPos(), ball.GetRing()))
 
 
+
+
     def getHeuristicVal(self):
         ballCount = [0, 0, 0, 0]
         #Implement Heuristic here
 
         for ball in self.AllBalls:
-            if(self.sameColorRightAdjacent(ball)):
+            if(self.sameColorNextAdjacent(ball)):
                 ballCount[ball.colNumber]+=1
             else:
                 pass#print("False! "+ball.ring+" "+str(ball.position))
@@ -225,9 +246,32 @@ class HungarianRings:
             return 0
         else:
             #print("Ball Count [0]:"+str(ballCount[0])+"\n"+"Ball Count [1]:"+str(ballCount[1])+"\n"+"Ball Count [2]:"+str(ballCount[2])+"\n"+ "Ball Count [3]:"+str(ballCount[3])+"\n"+"Not Solved!")
-            num = int((ballCount[0]+ ballCount[1] + ballCount[2] + ballCount[3] - 34)*(-0.5))
+            num = int((ballCount[0]+ ballCount[1] + ballCount[2] + ballCount[3] - 34)*(-0.25) + 0.75)
             return num
 
+
+    def sameColorNextAdjacent(self, ball):
+        if(ball.ring is "both"):
+            if ball.position == 4:
+                for i in range(len(self.AllBalls)):
+                    if 5 == self.AllBalls[i].position and ball.colNumber == self.AllBalls[i].colNumber:
+                        for j in range(len(self.AllBalls)):
+                            if self.AllBalls[j].position == 3:
+                                if self.AllBalls[i].ring == self.AllBalls[j].ring and self.AllBalls[i].colNumber == self.AllBalls[j].colNumber:
+                                    return True
+            else:
+                for i in range(len(self.AllBalls)):
+                    if 0 == self.AllBalls[i].position and ball.colNumber == self.AllBalls[i].colNumber:
+                        for j in range(len(self.AllBalls)):
+                            if self.AllBalls[j].position == 18:
+                                if self.AllBalls[i].ring == self.AllBalls[j].ring and self.AllBalls[i].colNumber == self.AllBalls[j].colNumber:
+                                    return True
+        else:
+            for i in range(len(self.AllBalls)):
+                if (ball.position+1) == self.AllBalls[i].position and ball.colNumber == self.AllBalls[i].colNumber:
+                    if ball.ring == self.AllBalls[i].ring or self.AllBalls[i].ring == "both":
+                        return True
+        return False
 ##########################################################################################################
 ################## Code for the randomizer ###############################################################
 ##########################################################################################################
@@ -320,22 +364,7 @@ class HungarianRings:
                 self.AllBalls[i].setPosition(self.AllBalls[i].position-1)
 
 
-    def sameColorRightAdjacent(self, ball):
-        if(ball.ring is "both"):
-            if ball.position == 4:
-                for i in range(len(self.AllBalls)):
-                    if 5 == self.AllBalls[i].position and ball.colNumber == self.AllBalls[i].colNumber:
-                        return True
-            else:
-                for i in range(len(self.AllBalls)):
-                    if 0 == self.AllBalls[i].position and ball.colNumber == self.AllBalls[i].colNumber:
-                        return True
-        else:
-            for i in range(len(self.AllBalls)):
-                if (ball.position+1) == self.AllBalls[i].position and ball.colNumber == self.AllBalls[i].colNumber:
-                    if ball.ring == self.AllBalls[i].ring or self.AllBalls[i].ring == "both":
-                        return True
-        return False
+
 
 
 ##########################################################################################################
@@ -367,7 +396,10 @@ class myGUI(QWidget):
         self.setWindowTitle("Hungarian Solver")
 
     def IDAstar(self):
-        IDAstarController(self.HR)
+        Ctrl = IDAstarController(self.HR)
+
+        self.HR = Ctrl.GetSolvedPuzzle()
+        self.draw()
 
     def Reset(self):
         self.HR = HungarianRings()
