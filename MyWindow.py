@@ -3,9 +3,9 @@
 import sys
 import random
 import heapq
-import threading
 import gc
-
+import plotly.plotly as py
+from plotly.graph_objs import *
 
 from PyQt5.QtCore import QSize, Qt
 from PyQt5.QtGui import (QBrush, QColor, QFont, QLinearGradient, QPainter,
@@ -23,29 +23,28 @@ class IDAstarController():
     def __init__(self, puzzle):
         self.Root = IterativeDeepeningAStar(puzzle)
         self.f_limit = 1
-        self.Tree = [self.Root, None, None, None]
         self.PQ = []
         self.NodesExpanded =0
         heapq.heappush(self.PQ, (self.Root.GetSum(), self.Root))
 
-        self.SolvedNode = self.ida_star()
-        print("Nodes Expanded in final iteration: ", self.NodesExpanded)
+        self.SolvedNode = None
+
 
     def ida_star(self):
-        self.f_limit = self.Root.GetHeuristic()
+        self.f_limit = 16
         while True:
-            f_next, SolvedNode = self.search(heapq.heappop(self.PQ)[1])
+            f_next, self.SolvedNode = self.search(heapq.heappop(self.PQ)[1])
 
 
             if f_next == 0:
-                return SolvedNode
+                print("Number of moves to solution       :",self.SolvedNode.GetDepth())
+                print("Nodes Expanded in final iteration :", self.NodesExpanded)
+                return self.NodesExpanded, self.SolvedNode.GetDepth()
             else:
                 print("f_next : ", f_next, " (",self.NodesExpanded,")")#Progress Check
 
-            self.Tree = []
             self.PQ = []
             gc.collect()
-            self.Tree = [self.Root, None, None, None]
             heapq.heappush(self.PQ, (self.Root.GetSum(), self.Root))
             self.f_limit = f_next
             self.NodesExpanded=0
@@ -56,7 +55,7 @@ class IDAstarController():
         self.NodesExpanded+=1
         while True:
             if temp == 0:
-                print("Solution found at ["+ str(SolvedNode.GetIndex()[0]) + ", " +str(SolvedNode.GetIndex()[1]) + "] (",SolvedNode.GetSum(),")")
+                #print("Solution found, (",SolvedNode.GetSum(),")")
                 return 0, SolvedNode
             if temp < f_next:
                 f_next = temp
@@ -66,6 +65,8 @@ class IDAstarController():
             nextNode = heapq.heappop(self.PQ)[1]
             temp, SolvedNode = self.expand(nextNode)
             self.NodesExpanded+=1
+            if self.NodesExpanded%10000==0:
+                print("f_next : ", f_next, " (",self.NodesExpanded,")")#Progress Check
 
         return f_next, None
 
@@ -77,22 +78,16 @@ class IDAstarController():
             return f, None
         if node.GetHeuristic() == 0:
             #print("Moves made : ", node.GetDepth())
-            #print("Solution found at ["+ str(node.GetIndex()[0]) + ", " +str(node.GetIndex()[1]) + "] (in node)")
             return 0, node
         f_next = 100
-        myArr = []
-        NotAccepted = 0
         for i in range(4):
-            temp = IterativeDeepeningAStar(node.GetPuzzle(), node.GetDepth()+1, node.GetIndex(), [len(self.Tree),i-NotAccepted],i)
+            temp = IterativeDeepeningAStar(node.GetPuzzle(), node.GetDepth()+1,i)
             if temp.GetSum() <= self.f_limit:
                 if temp.GetHeuristic() == 0:
                     return 0, temp
-                myArr.append(temp)
                 heapq.heappush(self.PQ, (temp.GetSum(),temp))
             elif temp.GetSum() < f_next:
                 f_next = temp.GetSum()
-                NotAccepted+=1
-        self.Tree.append(myArr)
 
         return f_next, None
 
@@ -103,11 +98,9 @@ class IDAstarController():
             return self.Root.GetPuzzle()
 
 class IterativeDeepeningAStar():
-    def __init__(self, puzzle, depth=0, parentnumber=[None,None], mynumber=[0,0], move=None):
+    def __init__(self, puzzle, depth=0, move=None):
         self.Puzzle = HungarianRings(puzzle)
         self.Depth = depth
-        self.PredecessorIndex = parentnumber
-        self.MyIndex = mynumber
         self.Direction = move
 
         if(self.Direction == 0):
@@ -138,8 +131,6 @@ class IterativeDeepeningAStar():
     def InfoPrint(self):
         print("Depth           : ", self.Depth)
         print("Heuristic Value : ", self.HeuristicVal)
-        print("Parent          : [", self.PredecessorIndex[0], ", ", self.PredecessorIndex[1], "]")
-        print("Me              : [", self.MyIndex[0], ", ", self.MyIndex[1], "]")
         print("My Move         : ", self.Direction)
         print("")
 
@@ -151,10 +142,10 @@ class IterativeDeepeningAStar():
         return self.Depth
     def GetMove(self):
         return self.Direction
-    def GetParentIndex(self):
-        return self.PredecessorIndex
-    def GetIndex(self):
-        return self.MyIndex
+#    def GetParentIndex(self):
+#        return self.PredecessorIndex
+#    def GetIndex(self):
+#        return self.MyIndex
     def GetPuzzle(self):
         return self.Puzzle
 
@@ -381,7 +372,7 @@ class HungarianRings:
 
 
 class myGUI(QWidget):
-    def __init__(self, num):
+    def __init__(self):
         super(myGUI, self).__init__()
 
         mainLayout = QHBoxLayout()
@@ -398,17 +389,103 @@ class myGUI(QWidget):
         self.btn_Randomize.clicked.connect(self.Randomize)
         self.btn_Reset.clicked.connect(self.Reset)
         self.btn_Solve.clicked.connect(self.IDAstar)
+        self.btn_solve_five_graph.clicked.connect(self.SolveAndPlot)
 
         self.setLayout(mainLayout)
 
-        self.setWindowTitle("Hungarian Solver " + str(num))
+        self.setWindowTitle("Hungarian Solver ")
 
+    def SolveAndPlot(self):
+        graphplots = []
+        random.seed()
+        """
+        for i in range(5):
+            self.HR = HungarianRings()
+            choice = random.randint(10, 100)
+            print("Next puzzle is randomized",choice,"times!")
+            self.RanomizeCounter.setValue(choice)
+            self.Randomize()
+            self.draw()
+            Ctrl = IDAstarController(self.HR)
+            graphplots.append(Ctrl.ida_star())
+        """
+
+
+        self.HR = HungarianRings()
+        print("Next puzzle is randomized",18,"times!")
+        self.RanomizeCounter.setValue(18)
         self.Randomize()
+        self.draw()
+        Ctrl = IDAstarController(self.HR)
+        graphplots.append(Ctrl.ida_star())
+        self.HR = HungarianRings()
+        print("Next puzzle is randomized",59,"times!")
+        self.RanomizeCounter.setValue(59)
+        self.Randomize()
+        self.draw()
+        Ctrl = IDAstarController(self.HR)
+        graphplots.append(Ctrl.ida_star())
+        self.HR = HungarianRings()
+        print("Next puzzle is randomized",40,"times!")
+        self.RanomizeCounter.setValue(40)
+        self.Randomize()
+        self.draw()
+        Ctrl = IDAstarController(self.HR)
+        graphplots.append(Ctrl.ida_star())
+        self.HR = HungarianRings()
+        print("Next puzzle is randomized",32,"times!")
+        self.RanomizeCounter.setValue(32)
+        self.Randomize()
+        self.draw()
+        Ctrl = IDAstarController(self.HR)
+        graphplots.append(Ctrl.ida_star())
+
+
+
+
+        self.graph(graphplots)
+
+
+    def graph(self,gp):
+        x1=[]
+        y1=[]
+        py.sign_in('Python-Demo-Account', 'gwt101uhh0')
+        for row in gp:
+            y1.append(row[0])
+            x1.append(row[1])
+
+        trace1 = Scatter(
+            x=[x1[0], x1[1], x1[2], x1[3], 10],
+            y=[y1[0], y1[1], y1[2], y1[3], 7226],
+            mode='markers',
+            name='Runtime Data',
+            text=['Run 1', 'Run 2', 'Run 3', 'Run 4', 'Run 5'],
+            marker=Marker(
+                color='rgb(164, 194, 244)',
+                size=12,
+                line=Line(
+                    color='white',
+                    width=0.5
+        )
+    )
+        )
+        data = Data([trace1])
+        layout = Layout(
+            title='IDA* Results',
+            xaxis=XAxis(
+                title='Depth'
+            ),
+            yaxis=YAxis(
+                title='Nodes Expanded'
+            )
+        )
+        fig = Figure(data=data, layout=layout)
+        plot_url = py.plot(fig, filename='5Data')
 
 
     def IDAstar(self):
         Ctrl = IDAstarController(self.HR)
-
+        Ctrl.ida_star()
         self.HR = Ctrl.GetSolvedPuzzle()
         self.draw()
 
@@ -466,6 +543,7 @@ class myGUI(QWidget):
     def createControl(self):
         self.Buttons = QGridLayout()
 
+        self.btn_solve_five_graph = QPushButton("Randomize, Solve 5, Graph")
         self.btn_Reset = QPushButton("Reset")
         self.btn_RotateCL = QPushButton("Rotate Left Side Clockwise")
         self.btn_RotateCCL = QPushButton("Rotate Left Side Counter-Clockwise")
@@ -474,19 +552,12 @@ class myGUI(QWidget):
         self.btn_RotateCCR = QPushButton("Rotate Right Side Counter-Clockwise")
         self.btn_Solve = QPushButton("Solve")
 
-
         self.btn_Randomize = QPushButton("Randomize the Puzzle")
         self.RanomizeCounter = QSpinBox()
         self.RanomizeCounter.setRange(1, 100)
         self.RanomizeCounter.setSingleStep(1)
-        random.seed()
-        choice = random.randint(10, 100)
-        self.RanomizeCounter.setValue(choice)
 
-
-
-
-
+       # self.Buttons.addWidget(self.self.btn_solve_five_graph, 6, 0)
         self.Buttons.addWidget(self.btn_RotateCL, 1, 0)
         self.Buttons.addWidget(self.btn_RotateCCL, 1, 1)
         self.Buttons.addWidget(self.btn_RotateCR, 2, 0)
@@ -495,6 +566,7 @@ class myGUI(QWidget):
         self.Buttons.addWidget(self.RanomizeCounter, 4, 1)
         self.Buttons.addWidget(self.btn_Reset,5,1)
         self.Buttons.addWidget(self.btn_Solve,5,0)
+        self.Buttons.addWidget(self.btn_solve_five_graph,6,0)
 
 
 
@@ -509,9 +581,8 @@ class myGUI(QWidget):
 if __name__ == '__main__':
 
     app = QApplication(sys.argv)
-    random.seed()
 
-    Puzzle = myGUI(random.randint(0,10))
+    Puzzle = myGUI()
     Puzzle.show()
 
     sys.exit(app.exec_())
