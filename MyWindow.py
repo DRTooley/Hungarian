@@ -3,6 +3,9 @@
 import sys
 import random
 import heapq
+import threading
+import gc
+
 
 from PyQt5.QtCore import QSize, Qt
 from PyQt5.QtGui import (QBrush, QColor, QFont, QLinearGradient, QPainter,
@@ -38,8 +41,11 @@ class IDAstarController():
                 return SolvedNode
             else:
                 print("f_next : ", f_next, " (",self.NodesExpanded,")")#Progress Check
-            self.Tree = [self.Root, None, None, None]
+
+            self.Tree = []
             self.PQ = []
+            gc.collect()
+            self.Tree = [self.Root, None, None, None]
             heapq.heappush(self.PQ, (self.Root.GetSum(), self.Root))
             self.f_limit = f_next
             self.NodesExpanded=0
@@ -79,6 +85,8 @@ class IDAstarController():
         for i in range(4):
             temp = IterativeDeepeningAStar(node.GetPuzzle(), node.GetDepth()+1, node.GetIndex(), [len(self.Tree),i-NotAccepted],i)
             if temp.GetSum() <= self.f_limit:
+                if temp.GetHeuristic() == 0:
+                    return 0, temp
                 myArr.append(temp)
                 heapq.heappush(self.PQ, (temp.GetSum(),temp))
             elif temp.GetSum() < f_next:
@@ -373,7 +381,7 @@ class HungarianRings:
 
 
 class myGUI(QWidget):
-    def __init__(self):
+    def __init__(self, num):
         super(myGUI, self).__init__()
 
         mainLayout = QHBoxLayout()
@@ -393,7 +401,10 @@ class myGUI(QWidget):
 
         self.setLayout(mainLayout)
 
-        self.setWindowTitle("Hungarian Solver")
+        self.setWindowTitle("Hungarian Solver " + str(num))
+
+        self.Randomize()
+
 
     def IDAstar(self):
         Ctrl = IDAstarController(self.HR)
@@ -466,8 +477,11 @@ class myGUI(QWidget):
 
         self.btn_Randomize = QPushButton("Randomize the Puzzle")
         self.RanomizeCounter = QSpinBox()
-        self.RanomizeCounter.setRange(0, 99999999)
+        self.RanomizeCounter.setRange(1, 100)
         self.RanomizeCounter.setSingleStep(1)
+        random.seed()
+        choice = random.randint(10, 100)
+        self.RanomizeCounter.setValue(choice)
 
 
 
@@ -489,10 +503,15 @@ class myGUI(QWidget):
 
 
 
+
+
+
 if __name__ == '__main__':
 
     app = QApplication(sys.argv)
-    myGUI = myGUI()
-    myGUI.show()
-    sys.exit(app.exec_())
+    random.seed()
 
+    Puzzle = myGUI(random.randint(0,10))
+    Puzzle.show()
+
+    sys.exit(app.exec_())
