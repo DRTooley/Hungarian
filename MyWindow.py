@@ -31,7 +31,7 @@ class IDAstarController():
 
 
     def ida_star(self):
-        self.f_limit = 16
+        self.f_limit = self.Root.GetHeuristic()
         while True:
             f_next, self.SolvedNode = self.search(heapq.heappop(self.PQ)[1])
 
@@ -64,13 +64,14 @@ class IDAstarController():
                 return f_next, None
             nextNode = heapq.heappop(self.PQ)[1]
             temp, SolvedNode = self.expand(nextNode)
-            self.NodesExpanded+=1
-            if self.NodesExpanded%10000==0:
-                print("f_next : ", f_next, " (",self.NodesExpanded,")")#Progress Check
+
+            #if self.NodesExpanded%1000==0:
+                #print("f_next : ", f_next, " (",self.NodesExpanded,")")#Progress Check
 
         return f_next, None
 
     def expand(self, node):
+        self.NodesExpanded+=1
         f = node.GetSum()
         #node.InfoPrint()#Debuging
         if f > self.f_limit:
@@ -81,6 +82,7 @@ class IDAstarController():
             return 0, node
         f_next = 100
         for i in range(4):
+
             temp = IterativeDeepeningAStar(node.GetPuzzle(), node.GetDepth()+1,i)
             if temp.GetSum() <= self.f_limit:
                 if temp.GetHeuristic() == 0:
@@ -398,48 +400,16 @@ class myGUI(QWidget):
     def SolveAndPlot(self):
         graphplots = []
         random.seed()
-        """
+
         for i in range(5):
             self.HR = HungarianRings()
-            choice = random.randint(10, 100)
+            choice = random.randint(8, 12)
             print("Next puzzle is randomized",choice,"times!")
             self.RanomizeCounter.setValue(choice)
             self.Randomize()
             self.draw()
             Ctrl = IDAstarController(self.HR)
             graphplots.append(Ctrl.ida_star())
-        """
-
-
-        self.HR = HungarianRings()
-        print("Next puzzle is randomized",18,"times!")
-        self.RanomizeCounter.setValue(18)
-        self.Randomize()
-        self.draw()
-        Ctrl = IDAstarController(self.HR)
-        graphplots.append(Ctrl.ida_star())
-        self.HR = HungarianRings()
-        print("Next puzzle is randomized",59,"times!")
-        self.RanomizeCounter.setValue(59)
-        self.Randomize()
-        self.draw()
-        Ctrl = IDAstarController(self.HR)
-        graphplots.append(Ctrl.ida_star())
-        self.HR = HungarianRings()
-        print("Next puzzle is randomized",40,"times!")
-        self.RanomizeCounter.setValue(40)
-        self.Randomize()
-        self.draw()
-        Ctrl = IDAstarController(self.HR)
-        graphplots.append(Ctrl.ida_star())
-        self.HR = HungarianRings()
-        print("Next puzzle is randomized",32,"times!")
-        self.RanomizeCounter.setValue(32)
-        self.Randomize()
-        self.draw()
-        Ctrl = IDAstarController(self.HR)
-        graphplots.append(Ctrl.ida_star())
-
 
 
 
@@ -455,8 +425,8 @@ class myGUI(QWidget):
             x1.append(row[1])
 
         trace1 = Scatter(
-            x=[x1[0], x1[1], x1[2], x1[3], 10],
-            y=[y1[0], y1[1], y1[2], y1[3], 7226],
+            x=[x1[0], x1[1], x1[2], x1[3], x1[4]],
+            y=[y1[0], y1[1], y1[2], y1[3], y1[4]],
             mode='markers',
             name='Runtime Data',
             text=['Run 1', 'Run 2', 'Run 3', 'Run 4', 'Run 5'],
@@ -480,7 +450,7 @@ class myGUI(QWidget):
             )
         )
         fig = Figure(data=data, layout=layout)
-        plot_url = py.plot(fig, filename='5Data')
+        plot_url = py.plot(fig, filename='Run Time Data')
 
 
     def IDAstar(self):
