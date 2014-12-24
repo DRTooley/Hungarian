@@ -2,8 +2,6 @@
 
 import random
 
-
-
 from PyQt5.QtCore import QSize, Qt
 from PyQt5.QtGui import (QBrush, QColor, QLinearGradient, QPainter,
         QPainterPath, QPalette, QPen)
