@@ -3,4 +3,4 @@ Hungarian
 
 Intro to AI CS 463
 
-This will be the space for all projects in CS 463G, Introduction to Atrificial Intelligence. My current work in progress is the Hungarian Rings Solver and GUI. This project will be coded in Python 3.4 using PyQt5 (v5.3.1). This is also my trial run of syncing my programs across my laptop and desktop.
+This was a project for CS 463G, Introduction to Atrificial Intelligence. This is a Hungarian Rings puzzle solver with a (crude) GUI. This project is coded using Python (v3.4) and the PyQt5 (v5.3.1) library.
